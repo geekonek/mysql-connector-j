@@ -62,7 +62,10 @@ public class OkPacket implements ProtocolEntity {
         ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
 
         // read session state changes info
-        if ((ok.getStatusFlags() & SERVER_SESSION_STATE_CHANGED) > 0) {
+        // added check for payload size since we are seeing ok packets with payload
+        // [-2, 0, 0, 2, 64, 0, 0] indicating SERVER_SESSION_STATE_CHANGED but without state information
+        //and this crashes with array index out of bounds exception in init metod below
+        if ((ok.getStatusFlags() & SERVER_SESSION_STATE_CHANGED) > 0 && (buf.getPosition() < buf.getPayloadLength())) {
             ok.sessionStateChanges.init(buf, errorMessageEncoding);
         }
         return ok;
